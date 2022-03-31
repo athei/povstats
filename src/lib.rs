@@ -2,7 +2,7 @@ use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
 use subxt::{
     rpc::RpcError, sp_runtime::traits::Header, ClientBuilder, DefaultConfig,
-    SubstrateExtrinsicParams
+    SubstrateExtrinsicParams,
 };
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
@@ -11,7 +11,8 @@ const POV_MAX: u64 = 5_242_880 / 2;
 #[subxt::subxt(runtime_metadata_path = "metadata/substrate.scale")]
 pub mod substrate {}
 
-type SubstrateRuntime = substrate::RuntimeApi<DefaultConfig, SubstrateExtrinsicParams<DefaultConfig>>;
+type SubstrateRuntime =
+    substrate::RuntimeApi<DefaultConfig, SubstrateExtrinsicParams<DefaultConfig>>;
 
 #[derive(Debug)]
 pub struct BlockStats {
