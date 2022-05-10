@@ -1,7 +1,8 @@
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
 use subxt::{
-    rpc::RpcError, sp_runtime::traits::Header, ClientBuilder, DefaultConfig, DefaultExtra,
+    rpc::RpcError, sp_runtime::traits::Header, ClientBuilder, DefaultConfig,
+    SubstrateExtrinsicParams,
 };
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
@@ -10,7 +11,8 @@ const POV_MAX: u64 = 5_242_880 / 2;
 #[subxt::subxt(runtime_metadata_path = "metadata/substrate.scale")]
 pub mod substrate {}
 
-type SubstrateRuntime = substrate::RuntimeApi<DefaultConfig, DefaultExtra<DefaultConfig>>;
+type SubstrateRuntime =
+    substrate::RuntimeApi<DefaultConfig, SubstrateExtrinsicParams<DefaultConfig>>;
 
 #[derive(Debug)]
 pub struct BlockStats {
@@ -70,14 +72,14 @@ pub async fn subscribe_stats(
                 .rpc()
                 .block_stats(block.hash())
                 .await
-                .map_err(|_| RpcError::Request("Failed to query block stats".to_string()))?
-                .ok_or_else(|| RpcError::Request("Block not available.".to_string()))?;
+                .map_err(|_| RpcError::Custom("Failed to query block stats".to_string()))?
+                .ok_or_else(|| RpcError::Custom("Block not available.".to_string()))?;
             let weight = api
                 .storage()
                 .system()
                 .block_weight(Some(block.hash()))
                 .await
-                .map_err(|_| RpcError::Request("Failed to query block weight".to_string()))?;
+                .map_err(|_| RpcError::Custom("Failed to query block weight".to_string()))?;
             let pov_len = stats.witness_len + stats.block_len;
             let total_weight = weight.normal + weight.operational + weight.mandatory;
 
