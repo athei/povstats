@@ -31,7 +31,7 @@ impl fmt::Display for BlockStats {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{:04}: PoV Size={:04}KiB({:03}%) Weight={:07}µs({:03}%) Witness={:04}KiB Block={:04}KiB NumExtrinsics={:04}",
+            "{:04}: PoV Size={:04}KiB({:03}%) Weight={:07}ms({:03}%) Witness={:04}KiB Block={:04}KiB NumExtrinsics={:04}",
             self.number,
             self.pov_len / 1024,
             self.pov_len * 100 / self.max_pov,
