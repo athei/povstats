@@ -38,7 +38,10 @@ impl fmt::Display for BlockStats {
 pub async fn subscribe_stats(
     client: Arc<Client<DefaultConfig>>,
 ) -> Result<impl TryStream<Ok = BlockStats, Error = BasicError> + Unpin, BasicError> {
-    let blocks = client.rpc().subscribe_blocks().await?
+    let blocks = client
+        .rpc()
+        .subscribe_blocks()
+        .await?
         .map_err(BasicError::from);
 
     let max_block_weights: BlockWeights = {
@@ -49,35 +52,37 @@ pub async fn subscribe_stats(
         codec::Decode::decode(&mut &constant.value[..])?
     };
 
-    Ok(Box::pin(blocks.map_err(Into::into).and_then(move |block| {
-        let client = client.clone();
-        let block_weight_storage_entry = BlockWeightStorageEntry;
-        async move {
-            let stats = client
-                .rpc()
-                .block_stats(block.hash())
-                .await?
-                .ok_or_else(|| BasicError::Other("Block not available.".to_string()))?;
-            let weight = client
-                .storage()
-                .fetch_or_default(&block_weight_storage_entry, Some(block.hash()))
-                .await?;
-            let pov_len = stats.witness_len + stats.block_len;
-            let total_weight = weight.normal + weight.operational + weight.mandatory;
+    Ok(Box::pin(blocks.map_err(Into::into).and_then(
+        move |block| {
+            let client = client.clone();
+            let block_weight_storage_entry = BlockWeightStorageEntry;
+            async move {
+                let stats = client
+                    .rpc()
+                    .block_stats(block.hash())
+                    .await?
+                    .ok_or_else(|| BasicError::Other("Block not available.".to_string()))?;
+                let weight = client
+                    .storage()
+                    .fetch_or_default(&block_weight_storage_entry, Some(block.hash()))
+                    .await?;
+                let pov_len = stats.witness_len + stats.block_len;
+                let total_weight = weight.normal + weight.operational + weight.mandatory;
 
-            Ok(BlockStats {
-                hash: block.hash(),
-                number: *block.number(),
-                pov_len,
-                witness_len: stats.witness_len,
-                len: stats.block_len,
-                weight: total_weight,
-                num_extrinsics: stats.num_extrinsics,
-                max_pov: POV_MAX,
-                max_weight: max_block_weights.max_block,
-            })
-        }
-    })))
+                Ok(BlockStats {
+                    hash: block.hash(),
+                    number: *block.number(),
+                    pov_len,
+                    witness_len: stats.witness_len,
+                    len: stats.block_len,
+                    weight: total_weight,
+                    num_extrinsics: stats.num_extrinsics,
+                    max_pov: POV_MAX,
+                    max_weight: max_block_weights.max_block,
+                })
+            }
+        },
+    )))
 }
 
 #[derive(Clone)]
