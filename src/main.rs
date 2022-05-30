@@ -1,5 +1,10 @@
 use clap::Parser;
 use futures::{StreamExt, TryStreamExt};
+use subxt::{
+    ClientBuilder, DefaultConfig,
+    SubstrateExtrinsicParams,
+};
+use std::sync::Arc;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -13,7 +18,14 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let mut stats = povstats::subscribe_stats(&args.url).await?.into_stream();
+    let client =
+        Arc::new(
+        ClientBuilder::new()
+            .set_url(args.url)
+            .build()
+            .await?);
+
+    let mut stats = povstats::subscribe_stats(client).await?.into_stream();
 
     while let Some(stat) = stats.next().await {
         println!("{}", stat?);
