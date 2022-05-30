@@ -1,6 +1,8 @@
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
-use subxt::{sp_core::H256, sp_runtime::traits::Header, BasicError, Client, DefaultConfig};
+use subxt::{
+    sp_core::H256, sp_runtime::traits::Header, BasicError, Client, ClientBuilder, DefaultConfig,
+};
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
 const POV_MAX: u64 = 5_242_880 / 2;
@@ -36,8 +38,11 @@ impl fmt::Display for BlockStats {
 }
 
 pub async fn subscribe_stats(
-    client: Arc<Client<DefaultConfig>>,
+    url: &str,
 ) -> Result<impl TryStream<Ok = BlockStats, Error = BasicError> + Unpin, BasicError> {
+    let client: Client<DefaultConfig> = ClientBuilder::new().set_url(url).build().await?;
+    let client = Arc::new(client);
+
     let blocks = client
         .rpc()
         .subscribe_blocks()
