@@ -1,7 +1,7 @@
 use clap::Parser;
 use futures::{StreamExt, TryStreamExt};
 use std::sync::Arc;
-use subxt::{ClientBuilder, DefaultConfig, SubstrateExtrinsicParams};
+use subxt::ClientBuilder;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]

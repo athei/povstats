@@ -38,7 +38,8 @@ impl fmt::Display for BlockStats {
 pub async fn subscribe_stats(
     client: Arc<Client<DefaultConfig>>,
 ) -> Result<impl TryStream<Ok = BlockStats, Error = BasicError> + Unpin, BasicError> {
-    let blocks = client.rpc().subscribe_blocks().await?;
+    let blocks = client.rpc().subscribe_blocks().await?
+        .map_err(BasicError::from);
 
     let max_block_weights: BlockWeights = {
         let locked_metadata = client.metadata();
@@ -48,7 +49,7 @@ pub async fn subscribe_stats(
         codec::Decode::decode(&mut &constant.value[..])?
     };
 
-    Ok(Box::pin(blocks.and_then(move |block| {
+    Ok(Box::pin(blocks.map_err(Into::into).and_then(move |block| {
         let client = client.clone();
         let block_weight_storage_entry = BlockWeightStorageEntry;
         async move {
@@ -92,7 +93,7 @@ impl subxt::StorageEntry for BlockWeightStorageEntry {
 }
 
 #[derive(codec::Encode, codec::Decode)]
-pub struct BlockWeights {
+struct BlockWeights {
     pub base_block: u64,
     pub max_block: u64,
     pub per_class: PerDispatchClass<WeightsPerClass>,
