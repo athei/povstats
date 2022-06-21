@@ -1,3 +1,5 @@
+> Moved to https://github.com/paritytech/blockstats
+
 # blockstats
 
 Connect to a parachain RPC node and monitor stats about its blocks.
